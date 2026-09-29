@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Life Prep - Steps</title>
+    <link rel="stylesheet" href="styles.css">
+
+</head>
+
+
+<body>
+
+    <div class="page-shell">
+
+    <h1>Life Prep</h1>
+
+    <nav>
+        <a href="index.html">Preps</a>
+        <a href="materials.html">Materials</a>
+        <a href="steps.html"><b>Steps</b></a>
+    </nav>
+
+
+    <!-- ================================ -->
+    <!-- INSERT -->
+    <!-- ================================ -->
+
+    <h2>Add Step</h2>
+
+    <select id="prepId">
+    </select>
+
+    <input
+        type="text"
+        id="instruction"
+        class="wide"
+        placeholder="Step (e.g. Charge all power banks)"
+    >
+
+    <button onclick="addStep()">
+        Add Step
+    </button>
+
+    <p>The step number is set automatically.</p>
+
+
+    <!-- ================================ -->
+    <!-- RETRIEVE -->
+    <!-- ================================ -->
+
+    <h2>Steps</h2>
+
+    <button onclick="loadSteps()">
+        Load Steps
+    </button>
+
+
+    <table>
+
+        <thead>
+
+            <tr>
+                <th>ID</th>
+                <th>Prep</th>
+                <th>Step No.</th>
+                <th>Instruction</th>
+            </tr>
+
+        </thead>
+
+        <tbody id="stepTable">
+
+        </tbody>
+
+    </table>
+
+
+    <script>
+
+        function showPopup(message) {
+            alert(message);
+        }
+
+
+        // Make text safe to show inside HTML
+        function esc(text) {
+
+            const div = document.createElement("div");
+
+            div.textContent = text;
+
+            return div.innerHTML;
+
+        }
+
+
+        // ========================================
+        // GET - Fill the prep dropdown
+        // ========================================
+
+        async function loadPrepOptions() {
+
+            const response =
+                await fetch("/api/preps");
+
+
+            const preps =
+                await response.json();
+
+
+            const select =
+                document.getElementById(
+                    "prepId"
+                );
+
+
+            select.innerHTML = "";
+
+
+            if (preps.length === 0) {
+
+                select.innerHTML =
+                    "<option value=''>Add a prep first</option>";
+
+                return;
+
+            }
+
+
+            preps.forEach(prep => {
+
+                select.innerHTML +=
+                    `<option value="${prep.id}">${esc(prep.title)}</option>`;
+
+            });
+
+        }
+
+
+        // ========================================
+        // GET - Retrieve Steps
+        // ========================================
+
+        async function loadSteps() {
+
+            const response =
+                await fetch("/api/steps");
+
+
+            const steps =
+                await response.json();
+
+
+            const table =
+                document.getElementById(
+                    "stepTable"
+                );
+
+
+            table.innerHTML = "";
+
+
+            steps.forEach(step => {
+
+                const row = `
+                    <tr>
+
+                        <td>${step.id}</td>
+
+                        <td>${esc(step.prep_title)}</td>
+
+                        <td>${step.step_number}</td>
+
+                        <td>${esc(step.instruction)}</td>
+
+                    </tr>
+                `;
+
+                table.innerHTML += row;
+
+            });
+
+        }
+
+
+        // ========================================
+        // POST - Insert Step
+        // ========================================
+
+        async function addStep() {
+
+            const step = {
+
+                prep_id:
+                    document.getElementById("prepId").value,
+
+                instruction:
+                    document.getElementById("instruction").value
+
+            };
+
+
+            const response =
+                await fetch(
+                    "/api/steps",
+                    {
+
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify(step)
+
+                    }
+                );
+
+
+            const result =
+                await response.json();
+
+
+            showPopup(result.message);
+
+
+            if (response.ok) {
+
+                // Clear input
+
+                document.getElementById("instruction").value = "";
+
+
+                // Refresh list
+
+                loadSteps();
+
+            }
+
+        }
+
+
+        // Load data when page opens
+        loadPrepOptions();
+        loadSteps();
+
+    </script>
+
+    </div>
+
+</body>
+
+</html>

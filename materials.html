@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Life Prep - Materials</title>
+    <link rel="stylesheet" href="styles.css">
+
+</head>
+
+
+<body>
+
+    <div class="page-shell">
+
+    <h1>Life Prep</h1>
+
+    <nav>
+        <a href="index.html">Preps</a>
+        <a href="materials.html"><b>Materials</b></a>
+        <a href="steps.html">Steps</a>
+    </nav>
+
+
+    <!-- ================================ -->
+    <!-- INSERT -->
+    <!-- ================================ -->
+
+    <h2>Add Material</h2>
+
+    <select id="prepId">
+    </select>
+
+    <input
+        type="text"
+        id="name"
+        placeholder="Material (e.g. Flashlight)"
+    >
+
+    <input
+        type="text"
+        id="quantity"
+        placeholder="Quantity (e.g. 1 per person)"
+    >
+
+    <button onclick="addMaterial()">
+        Add Material
+    </button>
+
+
+    <!-- ================================ -->
+    <!-- RETRIEVE -->
+    <!-- ================================ -->
+
+    <h2>Materials</h2>
+
+    <button onclick="loadMaterials()">
+        Load Materials
+    </button>
+
+
+    <table>
+
+        <thead>
+
+            <tr>
+                <th>ID</th>
+                <th>Prep</th>
+                <th>Material</th>
+                <th>Quantity</th>
+            </tr>
+
+        </thead>
+
+        <tbody id="materialTable">
+
+        </tbody>
+
+    </table>
+
+
+    <script>
+
+        function showPopup(message) {
+            alert(message);
+        }
+
+        // Make text safe to show inside HTML
+        function esc(text) {
+
+            const div = document.createElement("div");
+
+            div.textContent = text;
+
+            return div.innerHTML;
+
+        }
+
+        // ========================================
+        // GET - Fill the prep dropdown
+        // ========================================
+
+        async function loadPrepOptions() {
+
+            const response =
+                await fetch("/api/preps");
+
+
+            const preps =
+                await response.json();
+
+
+            const select =
+                document.getElementById(
+                    "prepId"
+                );
+
+
+            select.innerHTML = "";
+
+
+            if (preps.length === 0) {
+
+                select.innerHTML =
+                    "<option value=''>Add a prep first</option>";
+
+                return;
+
+            }
+
+
+            preps.forEach(prep => {
+
+                select.innerHTML +=
+                    `<option value="${prep.id}">${esc(prep.title)}</option>`;
+
+            });
+
+        }
+
+
+        // ========================================
+        // GET - Retrieve Materials
+        // ========================================
+
+        async function loadMaterials() {
+
+            const response =
+                await fetch("/api/materials");
+
+
+            const materials =
+                await response.json();
+
+
+            const table =
+                document.getElementById(
+                    "materialTable"
+                );
+
+
+            table.innerHTML = "";
+
+
+            materials.forEach(material => {
+
+                const row = `
+                    <tr>
+
+                        <td>${material.id}</td>
+
+                        <td>${esc(material.prep_title)}</td>
+
+                        <td>${esc(material.name)}</td>
+
+                        <td>${esc(material.quantity)}</td>
+
+                    </tr>
+                `;
+
+                table.innerHTML += row;
+
+            });
+
+        }
+
+
+        // ========================================
+        // POST - Insert Material
+        // ========================================
+
+        async function addMaterial() {
+
+            const material = {
+
+                prep_id:
+                    document.getElementById("prepId").value,
+
+                name:
+                    document.getElementById("name").value,
+
+                quantity:
+                    document.getElementById("quantity").value
+
+            };
+
+
+            const response =
+                await fetch(
+                    "/api/materials",
+                    {
+
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify(material)
+
+                    }
+                );
+
+
+            const result =
+                await response.json();
+
+
+            showPopup(result.message);
+
+
+            if (response.ok) {
+
+                // Clear inputs
+
+                document.getElementById("name").value = "";
+
+                document.getElementById("quantity").value = "";
+
+
+                // Refresh list
+
+                loadMaterials();
+
+            }
+
+        }
+
+
+        // Load data when page opens
+        loadPrepOptions();
+        loadMaterials();
+
+    </script>
+
+    </div>
+
+</body>
+
+</html>
